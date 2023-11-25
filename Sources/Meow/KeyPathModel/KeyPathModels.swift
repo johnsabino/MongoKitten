@@ -167,6 +167,39 @@ public struct ModelUpdater<M: KeyPathQueryableModel & MutableModel> {
             update.changes[path] = newValue
         }
     }
+    
+    public subscript<RM: ReadableModel>(dynamicMember keyPath: WritableKeyPath<M, QueryableField<Reference<RM>?>>) -> Reference<RM>? {
+        get {
+            update.model[keyPath: keyPath].value!
+        }
+        set {
+            update.model[keyPath: keyPath].value = newValue
+            let path = M.resolveFieldPath(keyPath)
+            try? update.changes[path] = newValue.encodePrimitive()
+        }
+    }
+    
+    public subscript<RM: Model>(dynamicMember keyPath: WritableKeyPath<M, QueryableField<RM?>>) -> RM? {
+        get {
+            update.model[keyPath: keyPath].value!
+        }
+        set {
+            update.model[keyPath: keyPath].value = newValue
+            let path = M.resolveFieldPath(keyPath)
+            try? update.changes[path] = newValue?.encode(to: Document.self)
+        }
+    }
+    
+    public subscript<RM: Model>(dynamicMember keyPath: WritableKeyPath<M, QueryableField<RM>>) -> RM {
+        get {
+            update.model[keyPath: keyPath].value!
+        }
+        set {
+            update.model[keyPath: keyPath].value = newValue
+            let path = M.resolveFieldPath(keyPath)
+            try? update.changes[path] = newValue.encode(to: Document.self)
+        }
+    }
 }
 
 /// A partial update, as result of `Model.makePartialUpdate` that can be executed on a collection to atomically `$set` these changes
